@@ -152,7 +152,7 @@ const submit = () => {
                                 </small>
                             </div>
                             <div class="mt-4">
-                                <label class="text-sm text-[#4a4b68]">Address <span style="color: red;">*</span></label>
+                                <label class="text-sm text-[#4a4b68]">Address </label>
                                 <InputText type="text" v-model="form.address" class="w-full p-2 input-field"
                                     placeholder="Address" />
                             </div>
