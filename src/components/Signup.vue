@@ -5,28 +5,38 @@ import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
+import Select from 'primevue/select';
+import Textarea from 'primevue/textarea';
 
 const toast = useToast();
 
 // Declare form and validation error objects as refs
 const form = ref({
-    name: "",
-    shop_name: "",
+    business_type: "",
+    company_name: "",
     mobile: "",
     email: "",
     address: "",
-    products: []
+    ready_stock: "",
+    terms_accepted: "",
+    name: "",
+    user_name: "",
+    password: ""
 });
 
 const validationErrors = ref({
+    company_name: "",
+    business_type: "",
+    mobile: "",
+    terms_accepted: "",
     name: "",
-    shop_name: "",
-    mobile: ""
+    user_name: "",
+    password: ""
 });
 
 // Function to show warnings
-const showWard = (summary, detail) => {
+const showWarn = (summary, detail) => {
     toast.add({
         severity: 'warn',
         summary: summary,
@@ -36,16 +46,30 @@ const showWard = (summary, detail) => {
     });
 };
 
+
 // Function to validate each field
 const validateField = (fieldName, value) => {
     switch (fieldName) {
+        case 'business_type':
+            validationErrors.value.business_type = !value ? "Business Model is required" : "";
+            break;
+        case 'company_name':
+            validationErrors.value.company_name = !value.trim() ? "Company Name is required" : "";
+            break;
+        case 'terms_accepted':
+            validationErrors.value.terms_accepted = !value ? "Must agree to termns & conditions" : "";
+            break;
         case 'name':
             validationErrors.value.name = !value.trim()
                 ? "Name is required" : "";
             break;
-        case 'shop_name':
-            validationErrors.value.shop_name = !value.trim()
-                ? "Shop Name is required" : "";
+        case 'user_name':
+            validationErrors.value.user_name = !value.trim()
+                ? "User Name is required" : "";
+            break;
+        case 'password':
+            validationErrors.value.password = !value.trim()
+                ? "Password is required" : "";
             break;
         case 'mobile':
             if (!value) {
@@ -71,12 +95,31 @@ const validateField = (fieldName, value) => {
 };
 
 // Watchers to trigger validation on field changes
-watch(() => form.value.name, (newValue) => validateField('name', newValue));
-watch(() => form.value.shop_name, (newValue) => validateField('shop_name', newValue));
+watch(() => form.value.business_type, (newValue) => validateField('business_type', newValue));
+watch(() => form.value.company_name, (newValue) => validateField('company_name', newValue));
 watch(() => form.value.mobile, (newValue) => validateField('mobile', newValue));
+watch(() => form.value.name, (newValue) => validateField('name', newValue));
+watch(() => form.value.user_name, (newValue) => validateField('user_name', newValue));
+watch(() => form.value.password, (newValue) => validateField('password', newValue));
 watch(() => form.value.email, (newValue) => validateField('email', newValue));
 
-// Form submission logic
+const businessModelsData = ref(null)
+
+const businessModels = async () => {
+    axios.get(`${import.meta.env.VITE_API_URL}/flutter-api/poskeeper-apps`, {
+        headers: {
+            "X-API-KEY": "terminalbd",
+            "X-API-VALUE": "terminalbd@aps"
+        }
+    }).then(function (response) {
+        console.log(response.data)
+    }).catch(function (error) {
+        console.log(error)
+    })
+}
+onMounted(() => {
+    businessModels()
+})
 const submit = () => {
     // Perform validation before submission
     Object.keys(form.value).forEach(key => {
@@ -86,7 +129,7 @@ const submit = () => {
     //validation check
     if (Object.values(validationErrors.value).some(error => error)) {
         if (Object.values(validationErrors.value).some(error => error !== "")) {
-            showWard('Validation Error', 'Please correct the errors before submitting.');
+            showWarn('Validation Error', 'Please correct the errors before submitting.');
             return;
         }
     }
@@ -100,119 +143,169 @@ const submit = () => {
     //     .catch(error => {
     //         // Handle error
     //         console.error(error);
-    //         showWard('Error', 'An error occurred while submitting the form.');
+    //         showWarn('Error', 'An error occurred while submitting the form.');
     //     });
 };
+const cities = ref([
+    { name: 'New York', code: 'NY' },
+    { name: 'Rome', code: 'RM' },
+    { name: 'London', code: 'LDN' },
+    { name: 'Istanbul', code: 'IST' },
+    { name: 'Paris', code: 'PRS' }
+]);
 
 </script>
 
 <template>
     <Toast group="br" position="bottom-right" />
-    <div class="min-h-screen min-w-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-        <div
-            class="w-full sm:max-w-xl sm:max-h-full mt-6 shadow-md overflow-hidden sm:rounded-lg flex-grow sm:flex-grow-0">
-            <div class="flex flex-col items-center mb-4">
-                <h2 class="text-3xl mt-2 font-semibold text-[#4a4b68] text-center">Welcome to Pos Keeper</h2>
-                <h2 class="text-3xl mt-2 font-semibold text-[green] text-center">Poultry POS</h2>
-            </div>
-            <div class="bar"></div>
-            <div class="w-full px-6 py-4 overflow-y-auto">
-                <form @submit.prevent="submit">
-                    <div class="max-h-screen overflow-y-auto">
-                        <div class="p-4">
-                            <div class="mt-4 flex-1">
-                                <label class="text-sm text-[#4a4b68]">Shop Name <span
-                                        style="color: red;">*</span></label>
-                                <InputText v-model="form.shop_name" class="w-full p-2 input-field"
-                                    placeholder="Shop Name" />
-                                <small v-if="validationErrors.shop_name" class="text-xs text-red-600">
-                                    {{ validationErrors.shop_name }}
-                                </small>
-                            </div>
-                            <div class="mt-4 flex-1">
-                                <label class="text-sm text-[#4a4b68]">Name <span style="color: red;">*</span></label>
-                                <InputText v-model="form.name" class="w-full p-2 input-field" placeholder="Name" />
-                                <small v-if="validationErrors.name" class="text-xs text-red-600">
-                                    {{ validationErrors.name }}
-                                </small>
-                            </div>
-                            <div class="mt-4 flex-1">
-                                <label class="text-sm text-[#4a4b68]">Mobile <span style="color: red;">*</span></label>
-                                <InputText v-model="form.mobile" class="w-full p-2 input-field" placeholder="Mobile" />
-                                <small v-if="validationErrors.mobile" class="text-xs text-red-600">
-                                    {{ validationErrors.mobile }}
-                                </small>
-                            </div>
-                            <div class="mt-4 flex-1">
-                                <label class="text-sm text-[#4a4b68]">Email</label>
-                                <InputText type="email" v-model="form.email" class="w-full p-2 input-field"
-                                    placeholder="Email" />
-                                <small v-if="validationErrors.email" class="text-xs text-red-600">
-                                    {{ validationErrors.email }}
-                                </small>
-                            </div>
-                            <div class="mt-4">
-                                <label class="text-sm text-[#4a4b68]">Address </label>
-                                <InputText type="text" v-model="form.address" class="w-full p-2 input-field"
-                                    placeholder="Address" />
-                            </div>
-                            <div class="flex flex-col items-start md:items-center mt-8">
-                                <p class="text-black font-extrabold text-xl">Choose your product</p>
-                                <div class="items-start">
-                                    <div class="flex flex-col sm:flex-row md:flex-row gap-4 mt-6">
-                                        <label class="flex items-center cursor-pointer space-x-2">
-                                            <input v-model="form.products" type="checkbox" value="Nourish"
-                                                class="w-6 h-6 border border-gray-400 rounded focus:ring-0 accent-green-500 text-green-500" />
-                                            <span>Nourish</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2 mt-2 md:mt-0">
-                                            <input v-model="form.products" type="checkbox" value="CP"
-                                                class="w-6 h-6 border border-gray-400 rounded focus:ring-0 accent-green-500 text-green-500" />
-                                            <span>CP</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2 mt-2 md:mt-0">
-                                            <input v-model="form.products" type="checkbox" value="Kazi"
-                                                class="w-6 h-6 border border-gray-400 rounded focus:ring-0 accent-green-500 text-green-500" />
-                                            <span>Kazi</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2 mt-2 md:mt-0">
-                                            <input v-model="form.products" type="checkbox" value="Aman"
-                                                class="w-6 h-6 border border-gray-400 rounded focus:ring-0 accent-green-500 text-green-500" />
-                                            <span>Aman</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+    <div class="min-h-screen max-h-screen w-full flex flex-col sm:justify-center items-center bg-[#F0F0F0]">
+        <form @submit.prevent="submit">
+            <div class="flex flex-col">
+                <!-- Fixed Header -->
+                <div class="flex-1 mt-1 shadow-md rounded-lg bg-white">
+                    <div class="flex flex-col sm:justify-start justify-center">
+                        <div class="flex flex-col items-center mb-4">
+                            <h2 class="text-3xl mt-2 font-semibold text-[#4a4b68] text-center">Welcome to Pos Keeper
+                            </h2>
+                            <h2 class="text-2xl mt-2 font-semibold text-[green] text-center">Create Your online store
+                            </h2>
                         </div>
-                        <div class="p-4">
-                            <div class="justify-between items-center">
-                                <div class="flex items-center justify-center w-full sm:w-auto mb-6 md:mb-2">
-                                    <Button type="submit" label="Build Store" class="w-full p-3 text-white rounded-lg"
-                                        style="background-color: #22c55e;" />
+                        <div class="bar"></div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 mt-1 shadow-md rounded-lg bg-white max-h-screen"
+                    style="max-height: calc(100vh - 186px);">
+                    <div class="flex flex-col sm:justify-start justify-center">
+                        <div class="w-full px-6 py-0">
+                            <div class="p-4">
+                                <div class="mt-1 flex-1">
+                                    <label class="text-sm text-[#4a4b68]">Business Model <span
+                                            style="color: red;">*</span></label>
+                                    <Select v-model="form.business_type" :options="cities" optionLabel="name"
+                                        placeholder="Select Business type" class="w-full" />
+                                    <small v-if="validationErrors.business_type" class="text-xs text-red-600">
+                                        {{ validationErrors.business_type }}
+                                    </small>
+                                </div>
+                                <div class="mt-4 flex-1">
+                                    <label class="text-sm text-[#4a4b68]">Company/Shop name <span
+                                            style="color: red;">*</span></label>
+                                    <InputText v-model="form.company_name" class="w-full p-2 input-field"
+                                        placeholder="XYZ Company" />
+                                    <small v-if="validationErrors.company_name" class="text-xs text-red-600">
+                                        {{ validationErrors.company_name }}
+                                    </small>
+                                </div>
+                                <div class="mt-4 flex-1">
+                                    <label class="text-sm text-[#4a4b68]">Mobile <span
+                                            style="color: red;">*</span></label>
+                                    <InputText v-model="form.mobile" class="w-full p-2 input-field"
+                                        placeholder="+880" />
+                                    <small v-if="validationErrors.mobile" class="text-xs text-red-600">
+                                        {{ validationErrors.mobile }}
+                                    </small>
+                                </div>
+                                <div class="mt-4 flex-1">
+                                    <label class="text-sm text-[#4a4b68]">Email</label>
+                                    <InputText type="email" v-model="form.email" class="w-full p-2 input-field"
+                                        placeholder="xyz@xyz.com" />
+                                    <!-- <small v-if="validationErrors.email" class="text-xs text-red-600">
+                                        {{ validationErrors.email }}
+                                    </small> -->
+                                </div>
+                                <div class="mt-4">
+                                    <label class="text-sm text-[#4a4b68]">Address </label>
+                                    <Textarea v-model="form.address" rows="3" cols="30" class="w-full p-2 input-field"
+                                        autoResize />
+                                </div>
+                                <div class="mt-4">
+                                    <label class="flex items-center space-x-2 mt-2 md:mt-0">
+                                        <input v-model="form.ready_stock" type="checkbox"
+                                            class="w-6 h-6 border border-gray-400 rounded focus:ring-0 accent-green-500 text-green-500" />
+                                        <span>Are you interested in ready stock?</span>
+                                    </label>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="flex items-center space-x-2 mt-2 md:mt-0">
+                                        <input v-model="form.terms_accepted" type="checkbox"
+                                            class="w-6 h-6 border border-gray-400 rounded focus:ring-0 accent-green-500 text-green-500" />
+                                        <span>I Accept terms and conditions</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </form>
+
+                    <div class="flex-1 mt-1 shadow-md rounded-lg bg-white">
+                        <div class="flex flex-col sm:justify-start justify-center">
+                            <div class="flex flex-col items-center mb-4">
+                                <h2 class="text-2xl mt-4 font-semibold text-[green] text-center">Login Information</h2>
+                            </div>
+                            <div class="bar"></div>
+                            <div class="w-full px-6 py-0">
+                                <div class="p-4">
+                                    <div class="mt-2 flex-1">
+                                        <label class="text-sm text-[#4a4b68]">Name <span
+                                                style="color: red;">*</span></label>
+                                        <InputText v-model="form.name" class="w-full p-2 input-field"
+                                            placeholder="Name" />
+                                        <small v-if="validationErrors.name" class="text-xs text-red-600">
+                                            {{ validationErrors.name }}
+                                        </small>
+                                    </div>
+                                    <div class="mt-4 flex-1">
+                                        <label class="text-sm text-[#4a4b68]">Username <span
+                                                style="color: red;">*</span></label>
+                                        <InputText v-model="form.user_name" class="w-full p-2 input-field"
+                                            placeholder="Username" />
+                                        <small v-if="validationErrors.user_name" class="text-xs text-red-600">
+                                            {{ validationErrors.user_name }}
+                                        </small>
+                                    </div>
+                                    <div class="mt-4 flex-1">
+                                        <label class="text-sm text-[#4a4b68]">Password <span
+                                                style="color: red;">*</span></label>
+                                        <InputText v-model="form.password" class="w-full p-2 input-field"
+                                            placeholder="Username" />
+                                        <small v-if="validationErrors.password" class="text-xs text-red-600">
+                                            {{ validationErrors.password }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fixed Footer -->
+                <div class="flex-1 mt-1 shadow-md rounded-lg bg-white">
+                    <div class="p-4">
+                        <div class="flex items-center justify-center w-full sm:w-auto mb-1">
+                            <Button type="submit" label="Build Store" class="w-full p-3 text-white rounded-lg"
+                                style="background-color: #22c55e;" />
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 </template>
 <style>
 .bar {
     height: 1px;
     /* Increased height for visibility */
-    background-color: rgb(68, 66, 66);
+    background-color: #00994f;
     width: 100%;
     /* Added width to make it span horizontally */
-    margin-top: 20px;
+    margin-top: 6px;
     margin-left: 0px;
     margin-right: 0px;
     padding: 0px;
 }
 
 .max-h-screen {
-    max-height: 70vh;
     overflow-y: auto;
 }
 

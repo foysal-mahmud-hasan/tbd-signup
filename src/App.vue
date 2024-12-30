@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import Signup from './components/Signup.vue'
 const showYoutubeModal = ref(true)
-console.log(showYoutubeModal.value)
+// console.log(showYoutubeModal.value)
 const closeYoutubeModal = () => {
   showYoutubeModal.value = false;
 }
