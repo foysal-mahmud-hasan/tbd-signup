@@ -8,28 +8,67 @@ import { useToast } from "primevue/usetoast";
 import { onMounted, ref, watch } from 'vue';
 import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
+import ProgressSpinner from 'primevue/progressspinner';
 
+const props = defineProps({
+    showYoutubeModal: Boolean
+})
+const showSpinner = ref(false);
+const disbaleSelect = ref(true)
+
+onMounted(() => {
+    businessModels();
+    showSpinner.value = true
+})
 const toast = useToast();
+const businessModelsData = ref(null)
 
+const businessModels = async () => {
+    try {
+        const response = await axios.get('/api/poskeeper-apps', {
+            headers: {
+                "X-API-KEY": "terminalbd",
+                "X-API-VALUE": "terminalbd@aps"
+            }
+        });
+        // console.log(response.data);
+        businessModelsData.value = response.data;
+        showSpinner.value = false;
+        // console.log(businessModelsData.value)
+    } catch (error) {
+        console.log(error);
+    }
+}
+const option = ref([])
+watch(() => businessModelsData.value, (newValue) => {
+    if (newValue && Array.isArray(newValue)) {
+        option.value = newValue.map((item) => ({
+            name: item.name,
+            value: item.app_slug
+        }));
+        disbaleSelect.value = false
+    }
+    showSpinner.value = false
+})
 // Declare form and validation error objects as refs
 const form = ref({
-    business_type: "",
-    company_name: "",
-    mobile: "",
-    email: "",
-    address: "",
-    ready_stock: "",
-    terms_accepted: "",
+    app_slug: "",
+    store_name: "",
     name: "",
     user_name: "",
+    mobile: "",
+    email: "",
+    is_stock: 0,
+    address: "",
+    terms_condition: 0,
     password: ""
 });
 
 const validationErrors = ref({
-    company_name: "",
-    business_type: "",
+    store_name: "",
+    app_slug: "",
     mobile: "",
-    terms_accepted: "",
+    terms_condition: "",
     name: "",
     user_name: "",
     password: ""
@@ -50,14 +89,14 @@ const showWarn = (summary, detail) => {
 // Function to validate each field
 const validateField = (fieldName, value) => {
     switch (fieldName) {
-        case 'business_type':
-            validationErrors.value.business_type = !value ? "Business Model is required" : "";
+        case 'app_slug':
+            validationErrors.value.app_slug = !value ? "Business Model is required" : "";
             break;
-        case 'company_name':
-            validationErrors.value.company_name = !value.trim() ? "Company Name is required" : "";
+        case 'store_name':
+            validationErrors.value.store_name = !value.trim() ? "Company Name is required" : "";
             break;
-        case 'terms_accepted':
-            validationErrors.value.terms_accepted = !value ? "Must agree to termns & conditions" : "";
+        case 'terms_condition':
+            validationErrors.value.terms_condition = !value ? "Must agree to termns & conditions" : "";
             break;
         case 'name':
             validationErrors.value.name = !value.trim()
@@ -95,32 +134,26 @@ const validateField = (fieldName, value) => {
 };
 
 // Watchers to trigger validation on field changes
-watch(() => form.value.business_type, (newValue) => validateField('business_type', newValue));
-watch(() => form.value.company_name, (newValue) => validateField('company_name', newValue));
+watch(() => form.value.app_slug, (newValue) => validateField('app_slug', newValue));
+watch(() => form.value.store_name, (newValue) => validateField('store_name', newValue));
 watch(() => form.value.mobile, (newValue) => validateField('mobile', newValue));
 watch(() => form.value.name, (newValue) => validateField('name', newValue));
 watch(() => form.value.user_name, (newValue) => validateField('user_name', newValue));
 watch(() => form.value.password, (newValue) => validateField('password', newValue));
-watch(() => form.value.email, (newValue) => validateField('email', newValue));
+watch(() => form.value.email, (newValue) => validateField('email', newValue)); watch(() => form.value.terms_condition, (newValue) => validateField('terms_condition', newValue));
 
-const businessModelsData = ref(null)
-
-const businessModels = async () => {
-    axios.get(`${import.meta.env.VITE_API_URL}/flutter-api/poskeeper-apps`, {
-        headers: {
-            "X-API-KEY": "terminalbd",
-            "X-API-VALUE": "terminalbd@aps"
-        }
-    }).then(function (response) {
-        console.log(response.data)
-    }).catch(function (error) {
-        console.log(error)
-    })
+const resetForm = () => {
+    form.value.store_name = "";
+    form.value.mobile = "";
+    form.value.email = "";
+    form.value.address = "";
+    form.value.is_stock = 0;
+    form.value.terms_condition = 0;
+    form.value.name = "";
+    form.value.user_name = "";
+    form.value.password = ""
 }
-onMounted(() => {
-    businessModels()
-})
-const submit = () => {
+const submit = async () => {
     // Perform validation before submission
     Object.keys(form.value).forEach(key => {
         validateField(key, form.value[key]);
@@ -133,30 +166,43 @@ const submit = () => {
             return;
         }
     }
-    console.log(form.value)
+    showSpinner.value = true;
+    const formData = {
+        ...form.value,
+        is_stock: form.value.is_stock ? 1 : 0,
+        terms_condition: form.value.terms_condition ? 1 : 0
+    };
+    // console.log(formData)
     // Make an API request (Replace with actual URL)
-    // axios.post('YOUR_API_URL', form.value)
-    //     .then(response => {
-    //         // Handle success
-    //         console.log(response.data);
-    //     })
-    //     .catch(error => {
-    //         // Handle error
-    //         console.error(error);
-    //         showWarn('Error', 'An error occurred while submitting the form.');
-    //     });
+    try {
+
+        const response = await axios.post('/shop-api/flutter-api/poskeeper-shop-setup',
+            formData,  // request body
+            {   // config object
+                headers: {
+                    "X-API-KEY": "terminalbd",
+                    "X-API-VALUE": "terminalbd@aps"
+                }
+            }
+        );
+        showSpinner.value = false;
+        // console.log(response.status);
+        if (response.status === 200) {
+            window.location.href = 'https://demo.poskeeper.com/'
+        }
+    } catch (error) {
+        showSpinner.value = false;
+        showWarn("Form Submission Error", error)
+    }
 };
-const cities = ref([
-    { name: 'New York', code: 'NY' },
-    { name: 'Rome', code: 'RM' },
-    { name: 'London', code: 'LDN' },
-    { name: 'Istanbul', code: 'IST' },
-    { name: 'Paris', code: 'PRS' }
-]);
 
 </script>
 
 <template>
+    <div v-if="showSpinner" class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-50 z-60">
+        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" fill="transparent" animationDuration=".5s"
+            aria-label="Custom ProgressSpinner" />
+    </div>
     <Toast group="br" position="bottom-right" />
     <div class="min-h-screen max-h-screen w-full flex flex-col sm:justify-center items-center bg-[#F0F0F0]">
         <form @submit.prevent="submit">
@@ -183,19 +229,20 @@ const cities = ref([
                                 <div class="mt-1 flex-1">
                                     <label class="text-sm text-[#4a4b68]">Business Model <span
                                             style="color: red;">*</span></label>
-                                    <Select v-model="form.business_type" :options="cities" optionLabel="name"
-                                        placeholder="Select Business type" class="w-full" />
-                                    <small v-if="validationErrors.business_type" class="text-xs text-red-600">
-                                        {{ validationErrors.business_type }}
+                                    <Select :disabled="disbaleSelect" v-model="form.app_slug" :options="option"
+                                        optionValue="value" optionLabel="name" placeholder="Select Business type"
+                                        class="w-full" />
+                                    <small v-if="validationErrors.app_slug" class="text-xs text-red-600 block">
+                                        {{ validationErrors.app_slug }}
                                     </small>
                                 </div>
                                 <div class="mt-4 flex-1">
                                     <label class="text-sm text-[#4a4b68]">Company/Shop name <span
                                             style="color: red;">*</span></label>
-                                    <InputText v-model="form.company_name" class="w-full p-2 input-field"
+                                    <InputText v-model="form.store_name" class="w-full p-2 input-field"
                                         placeholder="XYZ Company" />
-                                    <small v-if="validationErrors.company_name" class="text-xs text-red-600">
-                                        {{ validationErrors.company_name }}
+                                    <small v-if="validationErrors.store_name" class="text-xs text-red-600 block">
+                                        {{ validationErrors.store_name }}
                                     </small>
                                 </div>
                                 <div class="mt-4 flex-1">
@@ -203,7 +250,7 @@ const cities = ref([
                                             style="color: red;">*</span></label>
                                     <InputText v-model="form.mobile" class="w-full p-2 input-field"
                                         placeholder="+880" />
-                                    <small v-if="validationErrors.mobile" class="text-xs text-red-600">
+                                    <small v-if="validationErrors.mobile" class="text-xs text-red-600 block">
                                         {{ validationErrors.mobile }}
                                     </small>
                                 </div>
@@ -211,9 +258,9 @@ const cities = ref([
                                     <label class="text-sm text-[#4a4b68]">Email</label>
                                     <InputText type="email" v-model="form.email" class="w-full p-2 input-field"
                                         placeholder="xyz@xyz.com" />
-                                    <!-- <small v-if="validationErrors.email" class="text-xs text-red-600">
+                                    <small v-if="validationErrors.email" class="text-xs text-red-600 block">
                                         {{ validationErrors.email }}
-                                    </small> -->
+                                    </small>
                                 </div>
                                 <div class="mt-4">
                                     <label class="text-sm text-[#4a4b68]">Address </label>
@@ -222,17 +269,20 @@ const cities = ref([
                                 </div>
                                 <div class="mt-4">
                                     <label class="flex items-center space-x-2 mt-2 md:mt-0">
-                                        <input v-model="form.ready_stock" type="checkbox"
+                                        <input v-model="form.is_stock" type="checkbox"
                                             class="w-6 h-6 border border-gray-400 rounded focus:ring-0 accent-green-500 text-green-500" />
                                         <span>Are you interested in ready stock?</span>
                                     </label>
                                 </div>
                                 <div class="mt-4">
                                     <label class="flex items-center space-x-2 mt-2 md:mt-0">
-                                        <input v-model="form.terms_accepted" type="checkbox"
+                                        <input v-model="form.terms_condition" type="checkbox"
                                             class="w-6 h-6 border border-gray-400 rounded focus:ring-0 accent-green-500 text-green-500" />
                                         <span>I Accept terms and conditions</span>
                                     </label>
+                                    <small v-if="validationErrors.password" class="block text-xs text-red-600 mt-1">
+                                        {{ validationErrors.terms_condition }}
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -251,7 +301,7 @@ const cities = ref([
                                                 style="color: red;">*</span></label>
                                         <InputText v-model="form.name" class="w-full p-2 input-field"
                                             placeholder="Name" />
-                                        <small v-if="validationErrors.name" class="text-xs text-red-600">
+                                        <small v-if="validationErrors.name" class="text-xs text-red-600 block">
                                             {{ validationErrors.name }}
                                         </small>
                                     </div>
@@ -260,7 +310,7 @@ const cities = ref([
                                                 style="color: red;">*</span></label>
                                         <InputText v-model="form.user_name" class="w-full p-2 input-field"
                                             placeholder="Username" />
-                                        <small v-if="validationErrors.user_name" class="text-xs text-red-600">
+                                        <small v-if="validationErrors.user_name" class="text-xs text-red-600 block">
                                             {{ validationErrors.user_name }}
                                         </small>
                                     </div>
@@ -269,7 +319,7 @@ const cities = ref([
                                                 style="color: red;">*</span></label>
                                         <InputText v-model="form.password" class="w-full p-2 input-field"
                                             placeholder="Username" />
-                                        <small v-if="validationErrors.password" class="text-xs text-red-600">
+                                        <small v-if="validationErrors.password" class="block text-xs text-red-600">
                                             {{ validationErrors.password }}
                                         </small>
                                     </div>

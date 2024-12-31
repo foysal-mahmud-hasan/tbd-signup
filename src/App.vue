@@ -24,7 +24,7 @@ const closeYoutubeModal = () => {
       </iframe>
     </div>
   </div>
-  <Signup />
+  <Signup :showYoutubeModal="showYoutubeModal"/>
 </template>
 
 <style scoped>
