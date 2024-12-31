@@ -18,13 +18,14 @@ const closeYoutubeModal = () => {
         &times;
       </button>
       <!-- YouTube Video -->
-      <iframe class="w-full h-full" src="https://www.youtube.com/embed/PsfKTVU3Lnk" title="YouTube video player"
-        frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      <iframe class="w-full h-full" src="https://www.youtube.com/embed/CPclGyYCGtY?si=ADz5aR6p6QZQznzO"
+        title="YouTube video player" frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen>
       </iframe>
     </div>
   </div>
-  <Signup :showYoutubeModal="showYoutubeModal"/>
+  <Signup :showYoutubeModal="showYoutubeModal" />
 </template>
 
 <style scoped>
