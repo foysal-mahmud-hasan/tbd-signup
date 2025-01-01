@@ -25,8 +25,10 @@ const businessModelsData = ref(null)
 
 const businessModels = async () => {
     try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/flutter-api/poskeeper-apps`, {
+        const response = await axios.get(`/api/poskeeper-apps`, {
             headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
                 "X-API-KEY": "terminalbd",
                 "X-API-VALUE": "terminalbd@aps"
             }
@@ -175,8 +177,7 @@ const submit = async () => {
     // console.log(formData)
     // Make an API request (Replace with actual URL)
     try {
-
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/flutter-api/poskeeper-shop-setup`,
+        const response = await axios.post(`/shop-api/flutter-api/poskeeper-shop-setup`,
             formData,  // request body
             {   // config object
                 headers: {
